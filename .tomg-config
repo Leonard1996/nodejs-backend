@@ -1,0 +1,25 @@
+[
+	{
+		"host": "localhost",
+		"port": 3306,
+		"databaseName": "nodejs_code_ts",
+		"user": "phpmyadmin",
+		"password": "phpmyadmin",
+		"databaseType": "mysql",
+		"schemaName": "",
+		"ssl": false
+	},
+	{
+		"resultsPath": "./src",
+		"noConfigs": false,
+		"convertCaseFile": "pascal",
+		"convertCaseEntity": "pascal",
+		"convertCaseProperty": "none",
+		"propertyVisibility": "none",
+		"lazy": false,
+		"activeRecord": false,
+		"generateConstructor": false,
+		"customNamingStrategyPath": "",
+		"relationIds": false
+	}
+]
