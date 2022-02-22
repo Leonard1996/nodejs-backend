@@ -3,8 +3,8 @@ export const testDatabseConfig = {
     host: "localhost",
     port: 3306,
     username: "root",
-    password: "12345678",
-    database: "node_test",
+    password: "root",
+    database: "scraper_db",
     synchronize: false,
     logging: false,
     entities: [

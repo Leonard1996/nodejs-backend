@@ -13,7 +13,9 @@
     "start": "tsc && nodemon dist/app.js",
     "test": "jest",
     "module:create": "ts-node ./custom_scripts/create.module.command.ts",
-    "fixtures:load": "ts-node ./custom_scripts/load.fixtures.command.ts"
+    "fixtures:load": "ts-node ./custom_scripts/load.fixtures.command.ts",
+    "migration:generate": "rimraf dist/* && tsc && ts-node ./node_modules/typeorm/cli.js migration:generate -n",
+    "migration:run": "rimraf dist/* && tsc && ts-node ./node_modules/typeorm/cli.js migration:run"
   },
   "author": "",
   "license": "ISC",
@@ -40,7 +42,8 @@
   "dependencies": {
     "@hapi/joi": "^15.1.0",
     "aes-js": "^3.1.2",
-    "axios": "^0.19.0",
+    "axios": "^0.19.2",
+    "cheerio": "*",
     "class-validator": "^0.9.1",
     "cors": "^2.8.5",
     "cron": "^1.8.2",
@@ -48,19 +51,22 @@
     "express": "^4.17.1",
     "express-formidable": "^1.2.0",
     "express-validator": "^6.5.0",
+    "flatted": "^3.2.4",
     "fs": "0.0.1-security",
     "i18next": "^19.4.5",
     "jsonwebtoken": "^8.5.1",
     "md5-typescript": "^1.0.5",
     "multer": "^1.4.2",
-    "mysql": "^2.18.1",
+    "mysql2": "^2.3.3",
     "nodemailer": "^6.4.6",
     "passport": "^0.4.0",
     "passport-facebook-token": "^3.3.0",
     "passport-google-token": "^0.1.2",
+    "puppeteer": "^13.1.1",
     "reflect-metadata": "^0.1.10",
     "typeorm": "^0.2.25",
     "uuid": "^3.4.0",
-    "web-push": "^3.4.4"
+    "web-push": "^3.4.4",
+    "xml-js": "^1.6.11"
   }
 }

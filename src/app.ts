@@ -7,7 +7,6 @@ import { UserRouter } from "./user/user.router";
 import { createConnection } from "typeorm";
 import { AuthenticationRouter } from "./authentication/authentication.router";
 import { DocRouter } from "./doc/doc.router";
-import expressFormidable = require('express-formidable');
 import { AttachmentRouter } from "./attachment/attachment.router";
 
 var app = express();
@@ -15,8 +14,8 @@ var app = express();
 createConnection().then(async connection => {
 
 	app.use(cors())
-	app.use(bodyParser.json({limit: '200mb'}));
-	app.use(bodyParser.urlencoded({limit: '200mb', extended: true}));
+	app.use(bodyParser.json({ limit: '200mb' }));
+	app.use(bodyParser.urlencoded({ limit: '200mb', extended: true }));
 	//app.use(expressFormidable());
 
 	// Doc routes

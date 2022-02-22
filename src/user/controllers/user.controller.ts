@@ -7,6 +7,12 @@ import { QueryStringProcessor } from "../../common/utilities/QueryStringProcesso
 import { IUserFilter } from "../utilities/user-filter.interface";
 import { Helper } from "../../common/utilities/Helper";
 import { HttpStatusCode } from "../../common/utilities/HttpStatusCodes";
+import { getManager } from "typeorm";
+import { JobService } from "../services/job.service";
+import { ProductService } from "../services/product.service";
+const puppeteer = require('puppeteer');
+const axios = require('axios');
+const convert = require('xml-js');
 
 export class UserController {
 
@@ -56,8 +62,122 @@ export class UserController {
 
     static deleteById = async (request: Request, response: Response) => {
 
-        await  UserService.deleteById(+request.params.userId);
+        await UserService.deleteById(+request.params.userId);
 
         response.status(HttpStatusCode.OK).send();
+    }
+
+    static async startScrape(request: Request, response: Response) {
+        response.status(HttpStatusCode.OK).send('Scraping started');
+        UserController.scrape();
+    }
+
+    public static async scrape() {
+
+        const apiKey = '1a97e0cea9953e86dac194f2532bc05f'
+
+        const PROXY_USERNAME = 'scraperapi';
+        const PROXY_PASSWORD = apiKey; // <-- enter your API_Key here
+        const PROXY_SERVER = 'proxy-server.scraperapi.com';
+        const PROXY_SERVER_PORT = '8001';
+
+
+        async function asyncForEach(array, callback) {
+            for (let index = 0; index < array.length; index++) {
+                await callback(array[index]);
+            }
+        }
+
+
+
+        let products = [];
+
+        const rBlocket = ['image', 'imageset', 'font', 'stylesheet', 'media', 'other', 'script']; // to save data
+
+        const browser = await puppeteer.launch({
+            ignoreHTTPSErrors: true,
+            executablePath: '/opt/homebrew/bin/chromium',
+            args: [
+                `--proxy-server=http://${PROXY_SERVER}:${PROXY_SERVER_PORT}`,
+                '--no-sandbox',
+                '--disable-gpu',
+                '--disable-dev-shm-usage',
+                '--disable-setuid-sandbox',
+            ]
+        });
+
+        const page = await browser.newPage();
+
+        await page.authenticate({
+            username: PROXY_USERNAME,
+            password: PROXY_PASSWORD,
+        });
+
+        await page.setRequestInterception(true);
+
+        page.setDefaultNavigationTimeout(600000);
+
+        page.on('request', async (req) => {
+            let rType = req.resourceType();
+            if (rBlocket.includes(rType)) {
+                req.abort();
+            }
+            else {
+                req.continue();
+            }
+        });
+
+        const job = await JobService.insert();
+
+        try {
+
+            const headers = { "X-Requested-With": "XMLHttpRequest" }
+            const { data } = await axios.get("https://www.henryschein.it/product_details_sitemap1.xml", headers);
+            const { urlset: { url } } = JSON.parse(convert.xml2json(data, { compact: true, spaces: 4 }));
+
+
+
+            const tests = url.slice(0, 3); // only get 10 TO BE REMOVED
+
+            await asyncForEach(tests, async (test) => {
+
+                await page.goto(test['loc']['_text'] + '?FullPageMode=true');
+
+                console.log(test['loc']['_text'] + '?FullPageMode=true');
+
+                const textItem = await page.evaluate(() => {
+                    let el = document.querySelector('[type="application/ld+json"]');
+                    return el.innerHTML;
+                }).catch((error) => {
+                    console.log(error);
+                    return JSON.stringify({ product: null });
+                });
+
+                let product = JSON.parse(textItem);
+
+                products.push(product);
+            });
+
+            await ProductService.insert(products);
+
+            await JobService.update(job.id, "SUCCESS");
+        } catch (error) {
+            console.log(error);
+            await JobService.update(job.id, "FAILED");
+        }
+
+        await browser.close();
+        return products;
+
+    }
+
+    static getLatest = async (request: Request, response: Response) => {
+
+        try {
+            const products = await ProductService.getLatest()
+            response.status(HttpStatusCode.OK).send(new SuccessResponse({ products }));
+        } catch (error) {
+            console.log(error)
+        }
     }
 }

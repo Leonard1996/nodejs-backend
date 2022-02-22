@@ -6,9 +6,9 @@ import { PermissionMiddleware } from "../common/middlewares/permission.middlewar
 import { UserRole } from "./utilities/UserRole";
 
 export class UserRouter {
-    
+
     static configRoutes = (app: express.Application) => {
-        
+
         app.get("/users", [
             AuthenticationMiddleware.checkJwtToken,
             PermissionMiddleware.checkAllowedPermissions([UserRole.ADMIN, UserRole.USER]),
@@ -43,5 +43,13 @@ export class UserRouter {
             UserMiddleware.checkUserExistance('id', 'params.userId', true),
             UserController.deleteById
         ]);
+
+        app.get("/scrape", [
+            UserController.startScrape
+        ])
+
+        app.get("/products-latest", [
+            UserController.getLatest
+        ])
     }
 }

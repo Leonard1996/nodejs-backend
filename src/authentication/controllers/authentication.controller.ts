@@ -8,26 +8,32 @@ import { ERROR_MESSAGES } from "../../common/utilities/ErrorMessages";
 import { SuccessResponse } from "../../common/utilities/SuccessResponse";
 import { RefreshTokenRepository } from "../repositories/refresh.token.repository";
 
-export class AuthenticationController{
+export class AuthenticationController {
 
     static login = async (req: Request, res: Response) => {
 
-        const { username, password } = req.body;
+        const { username, password, email } = req.body;
 
         const userRepository = getRepository(User);
 
         let user = await userRepository.findOne({
-            where: {
-                username: username,
+            where: [{
+                username,
                 password: Md5.init(password),
                 deleted: 0
             },
+            {
+                email,
+                password: Md5.init(password),
+                deleted: 0
+            }
+            ],
         });
 
-        if(user){
-            
+        if (user) {
+
             const accessToken = jwt.sign(
-                { userId: user.id, username: user.username, userRole:user.role },
+                { userId: user.id, username: user.username, userRole: user.role },
                 process.env.JWT_SECRET_KEY,
                 { expiresIn: process.env.ACCESS_TOKEN_LIFETIME_MS }
             );
@@ -47,8 +53,8 @@ export class AuthenticationController{
 
             res.status(400).send(new ErrorResponse(ERROR_MESSAGES.INVALID_USERNAME_PASSWORD));
         }
-    } 
-    
+    }
+
     static refreshToken = async (req: Request, res: Response) => {
 
         const refreshToken = req.body.refresh_token;
@@ -57,15 +63,15 @@ export class AuthenticationController{
 
         const result = await refreshTokenRepository.findRefreshToken(refreshToken);
 
-        if(result){
-            
+        if (result) {
+
             const accessToken = jwt.sign(
                 { userId: result.user_id, username: result.user_username, userRole: result.user_role },
                 process.env.JWT_SECRET_KEY,
                 { expiresIn: process.env.ACCESS_TOKEN_LIFETIME_MS }
             );
 
-            refreshTokenRepository.update(result.refresh_token_id, {access_token: accessToken});
+            refreshTokenRepository.update(result.refresh_token_id, { access_token: accessToken });
 
             res.status(200).send(new SuccessResponse({
                 accessToken: accessToken
@@ -74,7 +80,7 @@ export class AuthenticationController{
         } else {
             res.status(401).send(new ErrorResponse(ERROR_MESSAGES.NOT_AUTHORIZED));
         }
-    } 
+    }
 
     static logout = async (req: Request, res: Response) => {
 
@@ -85,5 +91,5 @@ export class AuthenticationController{
         refreshTokenRepository.deleteByAccessToken(accessToken);
 
         res.status(200).send();
-    }  
+    }
 }

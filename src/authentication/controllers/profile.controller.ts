@@ -13,13 +13,13 @@ import { RefreshTokenRepository } from "../repositories/refresh.token.repository
 const UUID = require('uuid/v1');
 
 export class ProfileController {
-    
-    static register = async (req: Request, res: Response)  => {
 
-        const  { name, surname, email, password } = req.body;
+    static register = async (req: Request, res: Response) => {
+
+        const { name, surname, email, password } = req.body;
 
         const userRepository = getRepository(User);
-        
+
         let user = new User();
         user.role = UserRole.USER;
         user.name = name;
@@ -35,16 +35,16 @@ export class ProfileController {
 
         //SEND ACTIVATION MAIL
         let subject = 'Activate Account';
-        let htmlBody = `Click <a href=${process.env.FRONT_END_URL}/verify/${user.verifyToken}> to activate access to UnniTech.`;            
+        let htmlBody = `Click <a href=${process.env.FRONT_END_URL}/verify/${user.verifyToken}> to activate access to UnniTech.`;
         try {
             const mailer = new Mailer();
             mailer.sendMail(user.email, subject, htmlBody);
             res.status(201).send(new SuccessResponse(user.toResponseObject()));
 
-        } catch(error) {
-            
-            userRepository.delete({id: user.id});
-            
+        } catch (error) {
+
+            userRepository.delete({ id: user.id });
+
             const errorResponse = new ErrorResponse(ERROR_MESSAGES.EMAIL_FAILED);
             errorResponse.errors = [{
                 key: 'email',
@@ -56,7 +56,7 @@ export class ProfileController {
 
     static verfiy = async (req: Request, res: Response) => {
 
-        const  verifyToken = req.body.token;
+        const verifyToken = req.body.token;
 
         const userRepository = getRepository(User);
 
@@ -67,10 +67,10 @@ export class ProfileController {
             },
         });
 
-        if(user) {
-            
-            if(Functions.isNotExpired(user.tsVerifyTokenExpiration)){
-            
+        if (user) {
+
+            if (Functions.isNotExpired(user.tsVerifyTokenExpiration)) {
+
                 user.isVerified = true;
                 user.verifyToken = null;
                 user.tsVerifyTokenExpiration = null;
@@ -87,7 +87,7 @@ export class ProfileController {
             res.status(400).send(new ErrorResponse(ERROR_MESSAGES.RECORD_NOT_FOUND));
         }
     }
-    
+
     static forgotPassword = async (req: Request, res: Response) => {
 
         const { email } = req.body;
@@ -96,12 +96,12 @@ export class ProfileController {
 
         const userExist = await userRepository.findOne({
             where: {
-                email: email, 
+                email: email,
                 deleted: false
             }
         });
 
-        if(userExist){
+        if (userExist) {
 
             const userUpdate = {
                 modifyPasswordToken: UUID(),
@@ -111,10 +111,10 @@ export class ProfileController {
             const finalUser = userRepository.merge(userExist, userUpdate);
 
             await userRepository.save(finalUser);
-          
+
             // SEND FORGOT PASSWORD EMAILL
             let subject = 'Forgot Password';
-            let htmlBody = `Click <a href=${process.env.FRONT_END_URL}/change-password/${finalUser.modifyPasswordToken}>here</a> to reset your password.`;
+            let htmlBody = `Click <a href=${process.env.FRONT_END_URL}/reset-password/${finalUser.modifyPasswordToken}>here</a> to reset your password.`;
 
             try {
 
@@ -122,15 +122,15 @@ export class ProfileController {
                 mailer.sendMail(userExist.email, subject, htmlBody);
                 res.status(200).send();
 
-            } catch(error) {
-                
+            } catch (error) {
+
                 //Rollback user
-                userRepository.save(userExist);              
+                userRepository.save(userExist);
                 res.status(400).send(new ErrorResponse(ERROR_MESSAGES.EMAIL_FAILED));
             }
 
         } else {
-            
+
             res.status(400).send(new ErrorResponse(ERROR_MESSAGES.RECORD_NOT_FOUND));
         }
     }
@@ -143,22 +143,22 @@ export class ProfileController {
 
         let userExist = await userRepository.findOne({
             where: {
-                modify_password_token: token, 
+                modify_password_token: token,
                 deleted: false
             }
         });
 
-        if(userExist){
-            
-            if(Functions.isNotExpired(userExist.tsModifyPasswordTokenExpiration)){
-            
+        if (userExist) {
+
+            if (Functions.isNotExpired(userExist.tsModifyPasswordTokenExpiration)) {
+
                 const userUpdate = {
                     password: Md5.init(password),
                     modifyPasswordToken: null,
                     tsModifyPasswordTokenExpiration: null,
                     tsLastModifiedPwd: Functions.formatDate(Date.now())
                 }
-                const finalUser = userRepository.merge(userExist,userUpdate)
+                const finalUser = userRepository.merge(userExist, userUpdate)
                 await userRepository.save(finalUser);
 
                 const refreshTokenRepository = getCustomRepository(RefreshTokenRepository);
@@ -170,7 +170,7 @@ export class ProfileController {
                 res.status(400).send(new ErrorResponse(ERROR_MESSAGES.TOKEN_EXPIRED));
             }
         } else {
-            
+
             res.status(400).send(new ErrorResponse(ERROR_MESSAGES.RECORD_NOT_FOUND));
         }
     }
@@ -180,19 +180,19 @@ export class ProfileController {
         const userRepository = getRepository(User);
 
         let userId = res.locals.jwt.userId;
-        let userExist =  await userRepository.findOne({
+        let userExist = await userRepository.findOne({
             where: {
                 id: userId,
                 deleted: false,
             },
-        }); 
+        });
 
-        if(userExist){
-            
+        if (userExist) {
+
             res.status(200).send(new SuccessResponse(userExist.toResponseObject()));
 
         } else {
-            
+
             res.status(400).send(new ErrorResponse(ERROR_MESSAGES.RECORD_NOT_FOUND));
         }
     }
