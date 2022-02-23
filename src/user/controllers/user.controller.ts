@@ -7,12 +7,14 @@ import { QueryStringProcessor } from "../../common/utilities/QueryStringProcesso
 import { IUserFilter } from "../utilities/user-filter.interface";
 import { Helper } from "../../common/utilities/Helper";
 import { HttpStatusCode } from "../../common/utilities/HttpStatusCodes";
-import { getManager } from "typeorm";
 import { JobService } from "../services/job.service";
 import { ProductService } from "../services/product.service";
 const puppeteer = require('puppeteer');
 const axios = require('axios');
 const convert = require('xml-js');
+const fastCsv = require("fast-csv");
+const fs = require("fs");
+var path = require('path');
 
 export class UserController {
 
@@ -67,7 +69,7 @@ export class UserController {
         response.status(HttpStatusCode.OK).send();
     }
 
-    static async startScrape(request: Request, response: Response) {
+    static startScrape(request: Request, response: Response) {
         response.status(HttpStatusCode.OK).send('Scraping started');
         UserController.scrape();
     }
@@ -137,13 +139,11 @@ export class UserController {
 
 
 
-            const tests = url.slice(0, 3); // only get 10 TO BE REMOVED
+            const tests = url.slice(0, 2); // only get 10 TO BE REMOVED
 
             await asyncForEach(tests, async (test) => {
 
                 await page.goto(test['loc']['_text'] + '?FullPageMode=true');
-
-                console.log(test['loc']['_text'] + '?FullPageMode=true');
 
                 const textItem = await page.evaluate(() => {
                     let el = document.querySelector('[type="application/ld+json"]');
@@ -158,7 +158,7 @@ export class UserController {
                 products.push(product);
             });
 
-            await ProductService.insert(products);
+            await ProductService.insert(products, job.id);
 
             await JobService.update(job.id, "SUCCESS");
         } catch (error) {
@@ -176,6 +176,53 @@ export class UserController {
         try {
             const products = await ProductService.getLatest()
             response.status(HttpStatusCode.OK).send(new SuccessResponse({ products }));
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    static getCsv = async (request: Request, response: Response) => {
+
+        try {
+            const products = await ProductService.getLatest()
+            const rows = products.map(product => {
+                let offer = { priceCurrency: "", price: "" };
+                let brand = { name: "" };
+
+                if (product.offer) {
+                    offer = JSON.parse(product.offer);
+                }
+
+                if (product.brand) {
+                    brand = JSON.parse(product.brand);
+                }
+
+                return {
+                    id: product.id,
+                    name: product.name,
+                    description: product.description,
+                    sku: product.sku,
+                    image: product.image,
+                    url: product.url,
+                    mpn: product.mpn,
+                    priceCurrency: offer.priceCurrency,
+                    price: offer.price,
+                    brandName: brand.name,
+                }
+            })
+
+            // const csvFields = Object.keys(rows[0]).map(key => key.charAt(0).toUpperCase());
+
+            const csv = await fs.createWriteStream("./products.csv");
+            await fastCsv.write(rows, { headers: true }).
+                on("finish", async function () {
+                    const stat = fs.statSync("./products.csv");
+
+                    setTimeout(() => {
+                        response.sendFile(path.resolve('products.csv'))
+                    }, 0)
+
+                }).pipe(csv)
         } catch (error) {
             console.log(error)
         }

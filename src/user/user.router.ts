@@ -45,11 +45,18 @@ export class UserRouter {
         ]);
 
         app.get("/scrape", [
+            AuthenticationMiddleware.checkJwtToken,
             UserController.startScrape
-        ])
+        ]);
 
         app.get("/products-latest", [
+            AuthenticationMiddleware.checkJwtToken,
             UserController.getLatest
-        ])
+        ]);
+
+        app.get("/products-csv", [
+            AuthenticationMiddleware.checkJwtToken,
+            UserController.getCsv
+        ]);
     }
 }
