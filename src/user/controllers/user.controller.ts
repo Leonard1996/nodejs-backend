@@ -76,7 +76,7 @@ export class UserController {
 
     public static async scrape() {
 
-        const apiKey = '1a97e0cea9953e86dac194f2532bc05f'
+        const apiKey = '59cfd859d86eac4cedae502a46a8ec3a'
 
         const PROXY_USERNAME = 'scraperapi';
         const PROXY_PASSWORD = apiKey; // <-- enter your API_Key here
@@ -100,7 +100,7 @@ export class UserController {
             ignoreHTTPSErrors: true,
             //  executablePath: '/opt/homebrew/bin/chromium',
             args: [
-                // `--proxy-server=http://${PROXY_SERVER}:${PROXY_SERVER_PORT}`,
+                `--proxy-server=http://${PROXY_SERVER}:${PROXY_SERVER_PORT}`,
                 '--no-sandbox',
                 '--disable-gpu',
                 '--disable-dev-shm-usage',
@@ -110,10 +110,10 @@ export class UserController {
 
         const page = await browser.newPage();
 
-        // await page.authenticate({
-        //     username: PROXY_USERNAME,
-        //     password: PROXY_PASSWORD,
-        // });
+        await page.authenticate({
+            username: PROXY_USERNAME,
+            password: PROXY_PASSWORD,
+        });
 
         await page.setRequestInterception(true);
 
