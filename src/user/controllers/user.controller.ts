@@ -70,7 +70,7 @@ export class UserController {
     }
 
     static startScrape(request: Request, response: Response) {
-        response.status(HttpStatusCode.OK).send('Scraping started');
+        response.status(HttpStatusCode.OK).send({ message: 'Scraping started' });
         UserController.scrape();
     }
 
