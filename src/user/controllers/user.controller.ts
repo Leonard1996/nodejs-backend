@@ -100,7 +100,7 @@ export class UserController {
             ignoreHTTPSErrors: true,
             //  executablePath: '/opt/homebrew/bin/chromium',
             args: [
-                `--proxy-server=http://${PROXY_SERVER}:${PROXY_SERVER_PORT}`,
+                // `--proxy-server=http://${PROXY_SERVER}:${PROXY_SERVER_PORT}`,
                 '--no-sandbox',
                 '--disable-gpu',
                 '--disable-dev-shm-usage',
@@ -110,10 +110,10 @@ export class UserController {
 
         const page = await browser.newPage();
 
-        await page.authenticate({
-            username: PROXY_USERNAME,
-            password: PROXY_PASSWORD,
-        });
+        // await page.authenticate({
+        //     username: PROXY_USERNAME,
+        //     password: PROXY_PASSWORD,
+        // });
 
         await page.setRequestInterception(true);
 
