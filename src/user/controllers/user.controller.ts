@@ -98,7 +98,7 @@ export class UserController {
 
         const browser = await puppeteer.launch({
             ignoreHTTPSErrors: true,
-            //  executablePath: '/opt/homebrew/bin/chromium',
+            executablePath: '/opt/homebrew/bin/chromium',
             args: [
                 `--proxy-server=http://${PROXY_SERVER}:${PROXY_SERVER_PORT}`,
                 '--no-sandbox',
@@ -141,9 +141,9 @@ export class UserController {
 
 
 
-            const tests = url.slice(0, 10); // only get 10 TO BE REMOVED
+            const tests = url.slice(0, 2); // only get 10 TO BE REMOVED
 
-            await asyncForEach(tests, async (test) => {
+            await asyncForEach(['https://jsonplaceholder.typicode.com/todos/1'], async (test) => {
 
                 await page.goto(test['loc']['_text'] + '?FullPageMode=true');
 
