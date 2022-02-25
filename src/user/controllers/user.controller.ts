@@ -141,9 +141,9 @@ export class UserController {
 
 
 
-            const tests = url.slice(0, 2); // only get 10 TO BE REMOVED
+            const tests = url.slice(0, 3); // only get 10 TO BE REMOVED
 
-            await asyncForEach(['https://jsonplaceholder.typicode.com/todos/1'], async (test) => {
+            await asyncForEach(tests, async (test) => {
 
                 await page.goto(test['loc']['_text'] + '?FullPageMode=true');
 
