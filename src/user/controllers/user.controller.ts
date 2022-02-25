@@ -101,12 +101,12 @@ export class UserController {
             //  executablePath: '/opt/homebrew/bin/chromium',
             args: [
                 `--proxy-server=http://${PROXY_SERVER}:${PROXY_SERVER_PORT}`,
-                // '--no-sandbox',
-                // '--disable-gpu',
-                // '--disable-dev-shm-usage',
-                // '--disable-setuid-sandbox',
-                // '--ignore-certificate-errors',
-                // '--ignore-certificate-errors-spki-list ',
+                '--no-sandbox',
+                '--disable-gpu',
+                '--disable-dev-shm-usage',
+                '--disable-setuid-sandbox',
+                '--ignore-certificate-errors',
+                '--ignore-certificate-errors-spki-list ',
             ]
         });
 
@@ -141,7 +141,7 @@ export class UserController {
 
 
 
-            const tests = url.slice(0, 2); // only get 10 TO BE REMOVED
+            const tests = url.slice(0, 10); // only get 10 TO BE REMOVED
 
             await asyncForEach(tests, async (test) => {
 
