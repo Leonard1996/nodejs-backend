@@ -145,7 +145,7 @@ export class UserController {
 
             await asyncForEach(tests, async (test) => {
 
-                await page.goto(test['loc']['_text'] + '?FullPageMode=true');
+                await page.goto(test['loc']['_text']);
 
                 const textItem = await page.evaluate(() => {
                     let el = document.querySelector('[type="application/ld+json"]');
