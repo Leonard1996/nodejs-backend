@@ -98,7 +98,7 @@ export class UserController {
 
         const browser = await puppeteer.launch({
             ignoreHTTPSErrors: true,
-            executablePath: '/opt/homebrew/bin/chromium',
+            // executablePath: '/opt/homebrew/bin/chromium',
             args: [
                 `--proxy-server=http://${PROXY_SERVER}:${PROXY_SERVER_PORT}`,
                 '--no-sandbox',
