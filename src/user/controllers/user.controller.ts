@@ -101,12 +101,12 @@ export class UserController {
             //  executablePath: '/opt/homebrew/bin/chromium',
             args: [
                 `--proxy-server=http://${PROXY_SERVER}:${PROXY_SERVER_PORT}`,
-                '--no-sandbox',
-                '--disable-gpu',
-                '--disable-dev-shm-usage',
-                '--disable-setuid-sandbox',
-                '--ignore-certificate-errors',
-                '--ignore-certificate-errors-spki-list ',
+                // '--no-sandbox',
+                // '--disable-gpu',
+                // '--disable-dev-shm-usage',
+                // '--disable-setuid-sandbox',
+                // '--ignore-certificate-errors',
+                // '--ignore-certificate-errors-spki-list ',
             ]
         });
 
