@@ -45,7 +45,7 @@ export class UserRouter {
         ]);
 
         app.get("/scrape", [
-            AuthenticationMiddleware.checkJwtToken,
+            //AuthenticationMiddleware.checkJwtToken,
             UserController.startScrape
         ]);
 

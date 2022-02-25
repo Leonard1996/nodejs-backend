@@ -143,24 +143,23 @@ export class UserController {
 
             const tests = url.slice(0, 3); // only get 10 TO BE REMOVED
 
-            await page.goto("https://www.balkanweb.com/");
 
-            // await asyncForEach(tests, async (test) => {
+            await asyncForEach(tests, async (test) => {
 
-            //     await page.goto(test['loc']['_text']);
+                await page.goto(test['loc']['_text']);
 
-            //     const textItem = await page.evaluate(() => {
-            //         let el = document.querySelector('[type="application/ld+json"]');
-            //         return el.innerHTML;
-            //     }).catch((error) => {
-            //         console.log(error);
-            //         return JSON.stringify({ product: null });
-            //     });
+                const textItem = await page.evaluate(() => {
+                    let el = document.querySelector('[type="application/ld+json"]');
+                    return el.innerHTML;
+                }).catch((error) => {
+                    console.log(error);
+                    return JSON.stringify({ product: null });
+                });
 
-            //     let product = JSON.parse(textItem);
+                let product = JSON.parse(textItem);
 
-            //     products.push(product);
-            // });
+                products.push(product);
+            });
 
             await ProductService.insert(products, job.id);
 
