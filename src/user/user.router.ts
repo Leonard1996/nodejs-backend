@@ -45,7 +45,7 @@ export class UserRouter {
         ]);
 
         app.get("/scrape", [
-            //AuthenticationMiddleware.checkJwtToken,
+            AuthenticationMiddleware.checkJwtToken,
             UserController.startScrape
         ]);
 
@@ -57,6 +57,16 @@ export class UserRouter {
         app.get("/products-csv", [
             AuthenticationMiddleware.checkJwtToken,
             UserController.getCsv
+        ]);
+
+        app.get("/jobs", [
+            AuthenticationMiddleware.checkJwtToken,
+            UserController.getJobs
+        ]);
+
+        app.get("/categories", [
+            AuthenticationMiddleware.checkJwtToken,
+            UserController.getCategories
         ]);
     }
 }

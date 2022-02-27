@@ -4,12 +4,12 @@ import { Product } from "../entities/product.entity";
 
 export class ProductService {
 
-    static insert = async (products, jobId: number) => {
+    static insert = async (products, jobId: number, category?: string) => {
         const productRepository = getRepository(Product);
 
         for (const product of products) {
             if (Object.keys(product)) {
-                let newProduct = productRepository.create({ ...product, raw: JSON.stringify(product), offer: JSON.stringify(product.offers), brand: JSON.stringify(product.brand), jobId })
+                let newProduct = productRepository.create({ ...product, raw: JSON.stringify(product), offer: JSON.stringify(product.offers), brand: JSON.stringify(product.brand), jobId, category })
                 await productRepository.save(newProduct);
             }
         }

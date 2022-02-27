@@ -9,6 +9,8 @@ import { Helper } from "../../common/utilities/Helper";
 import { HttpStatusCode } from "../../common/utilities/HttpStatusCodes";
 import { JobService } from "../services/job.service";
 import { ProductService } from "../services/product.service";
+import { getRepository } from "typeorm";
+import { Job } from "../entities/job.entity";
 const puppeteer = require('puppeteer');
 const axios = require('axios');
 const convert = require('xml-js');
@@ -71,10 +73,10 @@ export class UserController {
 
     static startScrape(request: Request, response: Response) {
         response.status(HttpStatusCode.OK).send({ message: 'Scraping started' });
-        UserController.scrape();
+        UserController.scrape(request.query.category as string);
     }
 
-    public static async scrape() {
+    public static async scrape(category?: string) {
 
         const apiKey = '59cfd859d86eac4cedae502a46a8ec3a'
 
@@ -141,10 +143,11 @@ export class UserController {
 
 
 
-            const tests = url.slice(0, 3); // only get 10 TO BE REMOVED
+            // const tests = url.slice(0, 3); // only get 10 TO BE REMOVED
 
 
-            await asyncForEach(tests, async (test) => {
+            await asyncForEach(url, async (test) => {
+                if (category && category.length && !test['loc']['_text'].includes(category)) return;
 
                 await page.goto(test['loc']['_text']);
 
@@ -161,7 +164,7 @@ export class UserController {
                 products.push(product);
             });
 
-            await ProductService.insert(products, job.id);
+            await ProductService.insert(products, job.id, category);
 
             await JobService.update(job.id, "SUCCESS");
         } catch (error) {
@@ -181,6 +184,7 @@ export class UserController {
             response.status(HttpStatusCode.OK).send(new SuccessResponse({ products }));
         } catch (error) {
             console.log(error)
+            response.status(400).send(new ErrorResponse("General error"));
         }
     }
 
@@ -228,6 +232,44 @@ export class UserController {
                 }).pipe(csv)
         } catch (error) {
             console.log(error)
+            response.status(400).send(new ErrorResponse("General error"));
+        }
+    }
+
+    public static async getJobs(request: Request, response: Response) {
+        const jobRepository = getRepository(Job);
+        try {
+
+            const jobs = await jobRepository.find();
+            response.status(HttpStatusCode.OK).send(new SuccessResponse({ jobs }));
+        } catch (error) {
+            console.log(error)
+            response.status(400).send(new ErrorResponse("General error"));
+        }
+    }
+
+    public static async getCategories(request: Request, response: Response) {
+
+        const common = 'https://www.henryschein.it/it-it/dentale/p'
+
+        try {
+            const headers = { "X-Requested-With": "XMLHttpRequest" }
+            const { data } = await axios.get("https://www.henryschein.it/product_details_sitemap1.xml", headers);
+            const { urlset: { url } } = JSON.parse(convert.xml2json(data, { compact: true, spaces: 4 }));
+
+            let categories = {}
+
+            url.forEach(u => {
+                let category = u['loc']['_text'].split(common)[1];
+
+                category = category.split("/")[1]
+                categories[category] = true;
+            })
+            categories = Object.keys(categories)
+            response.status(HttpStatusCode.OK).send(new SuccessResponse({ categories }));
+        } catch (error) {
+            console.log(error)
+            response.status(400).send(new ErrorResponse("General error"));
         }
     }
 }
