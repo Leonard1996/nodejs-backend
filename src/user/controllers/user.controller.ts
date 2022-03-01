@@ -143,10 +143,10 @@ export class UserController {
 
 
 
-            // const tests = url.slice(0, 3); // only get 10 TO BE REMOVED
+            const tests = url.slice(0, 10); // only get 10 TO BE REMOVED
 
 
-            await asyncForEach(url, async (test) => {
+            await asyncForEach(tests, async (test) => {
                 if (category && category.length && !test['loc']['_text'].includes(category)) return;
 
                 await page.goto(test['loc']['_text']);
