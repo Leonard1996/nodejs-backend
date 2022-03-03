@@ -139,15 +139,30 @@ export class UserController {
 
             const headers = { "X-Requested-With": "XMLHttpRequest" }
             const { data } = await axios.get("https://www.henryschein.it/product_details_sitemap1.xml", headers);
-            const { urlset: { url } } = JSON.parse(convert.xml2json(data, { compact: true, spaces: 4 }));
+            let { urlset: { url } } = JSON.parse(convert.xml2json(data, { compact: true, spaces: 4 }));
 
 
 
-            const tests = url.slice(0, 10); // only get 10 TO BE REMOVED
+            // const tests = url.slice(0, 10); // only get 10 TO BE REMOVED
+            let slicedUrls = [] // to be removed
+
+            url.forEach((u) => {
+                if (category && category.length && u['loc']['_text'].includes(category)) slicedUrls.push(u);
+                if (!category) slicedUrls.push(u);
+            })
+
+            // console.log({ a: slicedUrls.length });
+
+            if (slicedUrls.length > 30) {
+                slicedUrls = slicedUrls.slice(0, 30)
+            }
+
+            // console.log({ a: slicedUrls.length });
 
 
-            await asyncForEach(tests, async (test) => {
-                if (category && category.length && !test['loc']['_text'].includes(category)) return;
+
+            await asyncForEach(slicedUrls, async (test) => {
+
 
                 await page.goto(test['loc']['_text']);
 
