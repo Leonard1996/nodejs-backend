@@ -163,23 +163,32 @@ export class UserController {
 
 
             await asyncForEach(slicedUrls, async (item) => {
+
                 let category = item.split(common)[1];
 
                 category = category.split("/")[1];
+                try {
+                    await page.goto(item, { waitUntil: ['domcontentloaded', 'networkidle0'], referer: "https://www.henryschein.it/" });
+                    const textItem = await page.evaluate((item, category) => {
+                        let el = document.querySelector('[type="application/ld+json"]');
+                        if (el !== null) {
+                            return el.innerHTML;
+                        } else {
+                            return JSON.stringify({ product: null, url: item, category });
+                        }
+
+                    });
 
 
-                await page.goto(item, { waitUntil: ['domcontentloaded', 'networkidle0'], referer: "https://www.henryschein.it/" });
-                const textItem = await page.evaluate((item, category) => {
-                    let el = document.querySelector('[type="application/ld+json"]');
-                    if (el !== null) {
-                        return el.innerHTML;
-                    } else {
-                        return JSON.stringify({ product: null, url: item, category });
-                    }
+                    let product = JSON.parse(textItem);
+                    await ProductService.insert([product], job.id, category);
 
-                });
-                let product = JSON.parse(textItem);
-                await ProductService.insert([product], job.id, category);
+                } catch (error) {
+                    console.log({ error })
+                    const product = { product: null, url: item, category }
+                    await ProductService.insert([product], job.id, category);
+                }
+
             });
             await JobService.update(job.id, "SUCCESS");
 
