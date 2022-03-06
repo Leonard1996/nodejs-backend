@@ -102,13 +102,11 @@ export class UserController {
             ignoreHTTPSErrors: true,
             // executablePath: '/opt/homebrew/bin/chromium',
             args: [
-                `--proxy-server=http://${PROXY_SERVER}:${PROXY_SERVER_PORT}`,
                 '--no-sandbox',
                 '--disable-gpu',
                 '--disable-dev-shm-usage',
-                // '--disable-setuid-sandbox',
-                '--ignore-certificate-errors',
-                '--ignore-certificate-errors-spki-list ',
+                '--disable-setuid-sandbox',
+                `--proxy-server=http://${PROXY_SERVER}:${PROXY_SERVER_PORT}`,
             ]
         });
 
@@ -137,51 +135,77 @@ export class UserController {
 
         try {
 
-            const headers = { "X-Requested-With": "XMLHttpRequest" }
-            const { data } = await axios.get("https://www.henryschein.it/product_details_sitemap1.xml", headers);
-            let { urlset: { url } } = JSON.parse(convert.xml2json(data, { compact: true, spaces: 4 }));
+            await page.goto('https://www.henryschein.it/product_details_sitemap1.xml',
+                { waitUntil: ['domcontentloaded', 'networkidle0'], referer: "https://www.henryschein.it/" }
+            );
+
+            const textContent = await page.evaluate(() => {
+                let _products = [];
+                let all = document.querySelectorAll('div.folder div.opened div.line span:not(.line):not(.folder-button):not(.html-tag):not(.fold):not(.html-attribute)');
+                all.forEach(el => {
+                    _products.push(el.innerHTML)
+                });
+                return JSON.stringify(_products);
+            });
 
 
 
-            // const tests = url.slice(0, 10); // only get 10 TO BE REMOVED
+            let products = JSON.parse(textContent);
             let slicedUrls = [] // to be removed
 
-            url.forEach((u) => {
-                if (category && category.length && u['loc']['_text'].includes(category)) slicedUrls.push(u);
+            products.forEach((u) => {
+                if (category && category.length && u.includes(category)) slicedUrls.push(u);
                 if (!category) slicedUrls.push(u);
             })
 
-            // console.log({ a: slicedUrls.length });
-
-            if (slicedUrls.length > 30) {
-                slicedUrls = slicedUrls.slice(0, 30)
-            }
-
-            // console.log({ a: slicedUrls.length });
+            const common = 'https://www.henryschein.it/it-it/dentale/p'
 
 
+            await asyncForEach(slicedUrls, async (item) => {
+                let category = item.split(common)[1];
 
-            await asyncForEach(slicedUrls, async (test) => {
-
-
-                await page.goto(test['loc']['_text']);
-
+                category = category.split("/")[1]
+                await page.goto(item, { waitUntil: ['domcontentloaded', 'networkidle0'], referer: "https://www.henryschein.it/" });
                 const textItem = await page.evaluate(() => {
                     let el = document.querySelector('[type="application/ld+json"]');
-                    return el.innerHTML;
-                }).catch((error) => {
-                    console.log(error);
-                    return JSON.stringify({ product: null });
+                    if (el !== null) {
+                        return el.innerHTML;
+                    } else {
+                        return JSON.stringify({ product: null, url: item, category });
+                    }
+
                 });
-
                 let product = JSON.parse(textItem);
-
-                products.push(product);
+                await ProductService.insert([product], job.id, category);
             });
-
-            await ProductService.insert(products, job.id, category);
-
             await JobService.update(job.id, "SUCCESS");
+
+            // await ProductService.insert(products, job.id, category);
+
+            ///--------------------
+
+
+            // await asyncForEach(slicedUrls, async (test) => {
+
+
+            //     await page.goto(test['loc']['_text']);
+
+            //     const textItem = await page.evaluate(() => {
+            //         let el = document.querySelector('[type="application/ld+json"]');
+            //         return el.innerHTML;
+            //     }).catch((error) => {
+            //         console.log(error);
+            //         return JSON.stringify({ product: null });
+            //     });
+
+            //     let product = JSON.parse(textItem);
+
+            //     products.push(product);
+            // });
+
+            // await ProductService.insert(products, job.id, category);
+
+            //  await JobService.update(job.id, "SUCCESS");
         } catch (error) {
             console.log(error);
             await JobService.update(job.id, "FAILED");
