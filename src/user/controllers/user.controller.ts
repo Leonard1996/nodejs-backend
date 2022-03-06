@@ -158,22 +158,21 @@ export class UserController {
                 if (!category) slicedUrls.push(u);
             })
 
+            console.log({ 44: slicedUrls[44], 43: slicedUrls[43], 45: slicedUrls[45], 46: slicedUrls[46] })
+
             const common = 'https://www.henryschein.it/it-it/dentale/p'
 
 
             await asyncForEach(slicedUrls, async (item) => {
-                let category = item.split(common)[1];
-
-                category = category.split("/")[1]
+                const index = slicedUrls.indexOf(item)
                 await page.goto(item, { waitUntil: ['domcontentloaded', 'networkidle0'], referer: "https://www.henryschein.it/" });
                 const textItem = await page.evaluate(() => {
                     let el = document.querySelector('[type="application/ld+json"]');
                     if (el !== null) {
                         return el.innerHTML;
                     } else {
-                        return JSON.stringify({ product: null, url: item, category });
+                        return JSON.stringify({ product: null, url: slicedUrls[index], category });
                     }
-
                 });
                 let product = JSON.parse(textItem);
                 await ProductService.insert([product], job.id, category);
