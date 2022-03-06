@@ -164,6 +164,10 @@ export class UserController {
 
 
             await asyncForEach(slicedUrls, async (item) => {
+                let category = item.split(common)[1];
+
+                category = category.split("/")[1];
+
                 const index = slicedUrls.indexOf(item)
                 await page.goto(item, { waitUntil: ['domcontentloaded', 'networkidle0'], referer: "https://www.henryschein.it/" });
                 const textItem = await page.evaluate(() => {
@@ -173,6 +177,7 @@ export class UserController {
                     } else {
                         return JSON.stringify({ product: null, url: slicedUrls[index], category });
                     }
+
                 });
                 let product = JSON.parse(textItem);
                 await ProductService.insert([product], job.id, category);
