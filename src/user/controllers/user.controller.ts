@@ -78,7 +78,7 @@ export class UserController {
 
     public static async scrape(category?: string) {
 
-        const apiKey = '59cfd859d86eac4cedae502a46a8ec3a'
+        const apiKey = '3e86575b70a391773ddc9c7842421b25'
 
         const PROXY_USERNAME = 'scraperapi';
         const PROXY_PASSWORD = apiKey; // <-- enter your API_Key here
