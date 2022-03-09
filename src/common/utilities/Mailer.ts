@@ -5,12 +5,14 @@ export class Mailer {
     public transporter: any;
     constructor() {
         this.transporter = nodemailer.createTransport({
-            host: process.env.EMAIL_HOST,
-            port: process.env.EMAIL_PORT,
-            secure: process.env.EMAIL_SECURE,
+            host: 'server.rtechno-labs.com',
+            port: '465',
+            secure: 'true',
             auth: {
-                user: process.env.EMAIL_USERNAME,
-                pass: process.env.EMAIL_PASSWORD,
+                // user: process.env.EMAIL_USERNAME,
+                user: 'admin@scraper.rtechno-labs.com',
+                //pass: process.env.EMAIL_PASSWORD,
+                pass: 'x4s8BCmdoCq8',
             },
         });
     }

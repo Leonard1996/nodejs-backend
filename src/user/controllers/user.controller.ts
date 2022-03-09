@@ -11,6 +11,7 @@ import { JobService } from "../services/job.service";
 import { ProductService } from "../services/product.service";
 import { getRepository } from "typeorm";
 import { Job } from "../entities/job.entity";
+import { Mailer } from "../../common/utilities/Mailer";
 const puppeteer = require('puppeteer');
 const axios = require('axios');
 const convert = require('xml-js');
@@ -163,7 +164,6 @@ export class UserController {
 
             const common = 'https://www.henryschein.it/it-it/dentale/p'
 
-
             await asyncForEach(slicedUrls, async (item) => {
 
                 let category = item.split(common)[1];
@@ -193,6 +193,8 @@ export class UserController {
 
             });
             await JobService.update(job.id, "SUCCESS");
+            const mailer = new Mailer();
+            await mailer.sendMail("aldi.l@rubik-technologies.al", "Scraper notice", `Scraper process started at ${new Date(job.tsCreated)} has finished.`)
 
             // await ProductService.insert(products, job.id, category);
 
@@ -245,6 +247,7 @@ export class UserController {
 
         try {
             const products = await ProductService.list(+request.params.id)
+            const { description } = await JobService.findOne(+request.params.id);
             const rows = products.map(product => {
                 let offer = { priceCurrency: "", price: "" };
                 let brand = { name: "" };
@@ -272,12 +275,14 @@ export class UserController {
             })
 
             // const csvFields = Object.keys(rows[0]).map(key => key.charAt(0).toUpperCase());
-
+            const time = new Date();
+            const filename = `${description}_${time.getDate()}/${time.getMonth() + 1}/${time.getFullYear()}_${time.getHours()}h-${time.getMinutes()}m-${time.getSeconds()}s`
+            console.log({ filename })
             const csv = await fs.createWriteStream("./products.csv");
             await fastCsv.write(rows, { headers: true }).
                 on("finish", async function () {
                     const stat = fs.statSync("./products.csv");
-
+                    response.header('Content-Disposition', `attachment; filename="${filename}.csv"`);
                     setTimeout(() => {
                         response.sendFile(path.resolve('products.csv'))
                     }, 0)
@@ -320,6 +325,16 @@ export class UserController {
             })
             categories = Object.keys(categories)
             response.status(HttpStatusCode.OK).send(new SuccessResponse({ categories }));
+        } catch (error) {
+            console.log(error)
+            response.status(400).send(new ErrorResponse("General error"));
+        }
+    }
+
+    public static deleteJob(request: Request, response: Response) {
+        try {
+            const result = JobService.delete(+request.params.id)
+            response.status(HttpStatusCode.OK).send(new SuccessResponse({ result }));
         } catch (error) {
             console.log(error)
             response.status(400).send(new ErrorResponse("General error"));

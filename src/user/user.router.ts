@@ -68,5 +68,10 @@ export class UserRouter {
             AuthenticationMiddleware.checkJwtToken,
             UserController.getCategories
         ]);
+
+        app.delete("/jobs/:id", [
+            AuthenticationMiddleware.checkJwtToken,
+            UserController.deleteJob
+        ]);
     }
 }
