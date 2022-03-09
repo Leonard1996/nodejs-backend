@@ -73,12 +73,14 @@ export class UserController {
 
     static startScrape(request: Request, response: Response) {
         response.status(HttpStatusCode.OK).send({ message: 'Scraping started' });
-        UserController.scrape(request.query.category as string);
+        let description = (request.query.description ? request.query.description : request.query.category) as string
+        description = description ? description : "All products";
+        UserController.scrape(description, request.query.category as string);
     }
 
-    public static async scrape(category?: string) {
+    public static async scrape(description: string, category?: string) {
 
-        const apiKey = '3e86575b70a391773ddc9c7842421b25'
+        const apiKey = '7b05cca37ebb7bb4323b71ce5226cebb'
 
         const PROXY_USERNAME = 'scraperapi';
         const PROXY_PASSWORD = apiKey; // <-- enter your API_Key here
@@ -131,7 +133,7 @@ export class UserController {
             }
         });
 
-        const job = await JobService.insert();
+        const job = await JobService.insert(description);
 
         try {
 
@@ -242,7 +244,7 @@ export class UserController {
     static getCsv = async (request: Request, response: Response) => {
 
         try {
-            const products = await ProductService.getLatest()
+            const products = await ProductService.list(+request.params.id)
             const rows = products.map(product => {
                 let offer = { priceCurrency: "", price: "" };
                 let brand = { name: "" };

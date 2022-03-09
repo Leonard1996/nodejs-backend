@@ -18,4 +18,9 @@ export class ProductService {
     static getLatest = () => {
         return getManager().query(`select * from products where job_id in (Select max(jobs.id) from jobs where status = 'SUCCESS')`)
     }
+
+    static list = (jobId: number) => {
+        const productRepository = getRepository(Product);
+        return productRepository.find({ where: { jobId } });
+    }
 }

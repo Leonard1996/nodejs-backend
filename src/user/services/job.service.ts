@@ -3,9 +3,9 @@ import { Job } from "../entities/job.entity";
 
 export class JobService {
 
-    static insert = async () => {
+    static insert = async (description: string) => {
         const jobRepository = getRepository(Job);
-        const job = jobRepository.create({ status: "PENDING" });
+        const job = jobRepository.create({ status: "PENDING", description });
         return jobRepository.save(job);
     }
 

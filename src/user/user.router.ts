@@ -54,8 +54,8 @@ export class UserRouter {
             UserController.getLatest
         ]);
 
-        app.get("/products-csv", [
-            AuthenticationMiddleware.checkJwtToken,
+        app.get("/products-csv/:id", [
+            // AuthenticationMiddleware.checkJwtToken,
             UserController.getCsv
         ]);
 
