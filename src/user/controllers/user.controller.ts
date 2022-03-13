@@ -12,6 +12,7 @@ import { ProductService } from "../services/product.service";
 import { getRepository } from "typeorm";
 import { Job } from "../entities/job.entity";
 import { Mailer } from "../../common/utilities/Mailer";
+import e = require("express");
 const puppeteer = require('puppeteer');
 const axios = require('axios');
 const convert = require('xml-js');
@@ -176,9 +177,9 @@ export class UserController {
                 category = category.split("/")[1];
                 try {
                     await page.goto(item, { waitUntil: ['domcontentloaded', 'networkidle0'], referer: "https://www.henryschein.it/" });
-                    const textItem = await page.evaluate((item, category) => {
+                    const textItem = await page.evaluate((item) => {
                         let el = document.querySelector('[type="application/ld+json"]');
-                        if (el !== null) {
+                        if (el && el.innerHTML && el.innerHTML.includes('offers')) {
                             return el.innerHTML;
                         } else {
                             return JSON.stringify({ url: item });
@@ -188,6 +189,7 @@ export class UserController {
 
 
                     let product = JSON.parse(textItem);
+                    if (!Object.keys(product).length) product = { url: item }
                     await ProductService.insert([product], job.id, category);
 
                 } catch (error) {
