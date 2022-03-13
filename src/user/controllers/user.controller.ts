@@ -181,7 +181,7 @@ export class UserController {
                         if (el !== null) {
                             return el.innerHTML;
                         } else {
-                            return JSON.stringify({ product: null, url: item, category });
+                            return JSON.stringify({ url: item, category });
                         }
 
                     });
