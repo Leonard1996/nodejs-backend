@@ -28,4 +28,13 @@ export class JobService {
         await productRepository.delete({ jobId: id });
         return jobRepository.delete(id);
     }
+
+    static getFailedUrls = async (id: number) => {
+        const jobRepository = getRepository(Job);
+        return jobRepository.createQueryBuilder('j')
+            .innerJoinAndSelect('j.products', 'products')
+            .where('j.id = :id', { id })
+            .andWhere(`(products.offer is NULL OR products.offer = '')`)
+            .getOne();
+    }
 }

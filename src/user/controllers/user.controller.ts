@@ -79,6 +79,11 @@ export class UserController {
         UserController.scrape(description, request.query.category as string);
     }
 
+    static startFailedScrape(request: Request, response: Response) {
+        response.status(HttpStatusCode.OK).send({ message: 'Scraping started' });
+        UserController.scrapeFailed(request);
+    }
+
     public static async scrape(description: string, category?: string) {
 
         const apiKey = '7b05cca37ebb7bb4323b71ce5226cebb'
@@ -196,32 +201,6 @@ export class UserController {
             const mailer = new Mailer();
             await mailer.sendMail("aldi.l@rubik-technologies.al", "Scraper notice", `Scraper process started at ${new Date(job.tsCreated)} has finished.`)
 
-            // await ProductService.insert(products, job.id, category);
-
-            ///--------------------
-
-
-            // await asyncForEach(slicedUrls, async (test) => {
-
-
-            //     await page.goto(test['loc']['_text']);
-
-            //     const textItem = await page.evaluate(() => {
-            //         let el = document.querySelector('[type="application/ld+json"]');
-            //         return el.innerHTML;
-            //     }).catch((error) => {
-            //         console.log(error);
-            //         return JSON.stringify({ product: null });
-            //     });
-
-            //     let product = JSON.parse(textItem);
-
-            //     products.push(product);
-            // });
-
-            // await ProductService.insert(products, job.id, category);
-
-            //  await JobService.update(job.id, "SUCCESS");
         } catch (error) {
             console.log(error);
             await JobService.update(job.id, "FAILED");
@@ -281,7 +260,6 @@ export class UserController {
             const csv = await fs.createWriteStream("./products.csv");
             await fastCsv.write(rows, { headers: true }).
                 on("finish", async function () {
-                    const stat = fs.statSync("./products.csv");
                     response.header('Content-Disposition', `attachment; filename="${filename}.csv"`);
                     setTimeout(() => {
                         response.sendFile(path.resolve('products.csv'))
@@ -339,5 +317,109 @@ export class UserController {
             console.log(error)
             response.status(400).send(new ErrorResponse("General error"));
         }
+    }
+
+    //
+
+
+    public static async scrapeFailed(request: Request) {
+
+        const apiKey = '7b05cca37ebb7bb4323b71ce5226cebb'
+
+        const PROXY_USERNAME = 'scraperapi';
+        const PROXY_PASSWORD = apiKey; // <-- enter your API_Key here
+        const PROXY_SERVER = 'proxy-server.scraperapi.com';
+        const PROXY_SERVER_PORT = '8001';
+
+
+        async function asyncForEach(array, callback) {
+            for (let index = 0; index < array.length; index++) {
+                await callback(array[index]);
+            }
+        }
+
+
+
+        let products = [];
+
+        const rBlocket = ['image', 'imageset', 'font', 'stylesheet', 'media', 'other', 'script']; // to save data
+
+        const browser = await puppeteer.launch({
+            ignoreHTTPSErrors: true,
+            // executablePath: '/opt/homebrew/bin/chromium',
+            args: [
+                '--no-sandbox',
+                '--disable-gpu',
+                '--disable-dev-shm-usage',
+                '--disable-setuid-sandbox',
+                `--proxy-server=http://${PROXY_SERVER}:${PROXY_SERVER_PORT}`,
+            ]
+        });
+
+        const page = await browser.newPage();
+
+        await page.authenticate({
+            username: PROXY_USERNAME,
+            password: PROXY_PASSWORD,
+        });
+
+        await page.setRequestInterception(true);
+
+        page.setDefaultNavigationTimeout(600000);
+
+        page.on('request', async (req) => {
+            let rType = req.resourceType();
+            if (rBlocket.includes(rType)) {
+                req.abort();
+            }
+            else {
+                req.continue();
+            }
+        });
+
+
+
+        try {
+            JobService.update(+request.params.jobId, "PENDING");
+            const { products, id, tsCreated } = await JobService.getFailedUrls(+request.params.jobId)
+
+            const urls = products.map(product => product.url);
+
+            await asyncForEach(urls, async (item) => {
+
+
+                try {
+                    await page.goto(item, { waitUntil: ['domcontentloaded', 'networkidle0'], referer: "https://www.henryschein.it/" });
+                    const textItem = await page.evaluate((item) => {
+                        let el = document.querySelector('[type="application/ld+json"]');
+                        if (el !== null) {
+                            return el.innerHTML;
+                        } else {
+                            return JSON.stringify({ product: null, url: item });
+                        }
+
+                    });
+                    const id = products.find(product => product.url === item);
+
+                    let product = JSON.parse(textItem);
+                    await ProductService.update({ id, ...product });
+
+                } catch (error) {
+                    console.log({ error })
+                }
+
+            });
+            await JobService.update(+request.params.jobId, "SUCCESS");
+            const mailer = new Mailer();
+            await mailer.sendMail("aldi.l@rubik-technologies.al", "Scraper notice", `Scraper process started at ${new Date(tsCreated)} has finished.`)
+
+        } catch (error) {
+            console.log(error);
+            await JobService.update(+request.params.jobId, "FAILED");
+        }
+
+        await browser.close();
+        return products;
+
     }
 }

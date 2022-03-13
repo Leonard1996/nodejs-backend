@@ -1,4 +1,4 @@
-import { getManager, getRepository } from "typeorm";
+import { getManager, getRepository, TransactionAlreadyStartedError } from "typeorm";
 import { Product } from "../entities/product.entity";
 
 
@@ -22,5 +22,13 @@ export class ProductService {
     static list = (jobId: number) => {
         const productRepository = getRepository(Product);
         return productRepository.find({ where: { jobId } });
+    }
+
+    static async update(product) {
+        const productRepository = getRepository(Product);
+        let oldProduct = await productRepository.findOne(product.id);
+        console.log({ oldProduct, product })
+        product = productRepository.merge(oldProduct, { raw: JSON.stringify(product), offer: JSON.stringify(product.offers), brand: JSON.stringify(product.brand) });
+        return productRepository.save(product);
     }
 }

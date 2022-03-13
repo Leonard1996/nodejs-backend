@@ -73,5 +73,10 @@ export class UserRouter {
             AuthenticationMiddleware.checkJwtToken,
             UserController.deleteJob
         ]);
+
+        app.get("/scrape-retry/:jobId", [
+            AuthenticationMiddleware.checkJwtToken,
+            UserController.startFailedScrape
+        ]);
     }
 }
