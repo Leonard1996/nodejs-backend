@@ -13,6 +13,7 @@ import { getRepository } from "typeorm";
 import { Job } from "../entities/job.entity";
 import { Mailer } from "../../common/utilities/Mailer";
 import e = require("express");
+import { Result } from "express-validator";
 const puppeteer = require('puppeteer');
 const axios = require('axios');
 const convert = require('xml-js');
@@ -257,17 +258,18 @@ export class UserController {
 
             // const csvFields = Object.keys(rows[0]).map(key => key.charAt(0).toUpperCase());
             const time = new Date();
-            const filename = `${description}_${time.getDate()}/${time.getMonth() + 1}/${time.getFullYear()}_${time.getHours()}h-${time.getMinutes()}m-${time.getSeconds()}s`
+            const filename = `${description}_${time.getDate()}-${time.getMonth() + 1}-${time.getFullYear()}_${time.getHours()}h-${time.getMinutes()}m-${time.getSeconds()}s`
             console.log({ filename })
-            const csv = await fs.createWriteStream("./products.csv");
+            const csv = fs.createWriteStream("./" + filename + '.csv');
             await fastCsv.write(rows, { headers: true }).
                 on("finish", async function () {
                     response.header('Content-Disposition', `attachment; filename="${filename}.csv"`);
                     setTimeout(() => {
-                        response.sendFile(path.resolve('products.csv'))
-                    }, 0)
+                        response.sendFile(path.resolve("./" + filename + ".csv"));
+                    }, 3000)
+                }).pipe(csv);
 
-                }).pipe(csv)
+
         } catch (error) {
             console.log(error)
             response.status(400).send(new ErrorResponse("General error"));
