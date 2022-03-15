@@ -83,7 +83,7 @@ export class UserController {
 
     static startFailedScrape(request: Request, response: Response) {
         response.status(HttpStatusCode.OK).send({ message: 'Scraping started' });
-        UserController.scrapeFailed(request);
+        UserController.scrapeFailed(request, response);
     }
 
     public static async scrape(description: string, category?: string) {
@@ -326,7 +326,7 @@ export class UserController {
     //
 
 
-    public static async scrapeFailed(request: Request) {
+    public static async scrapeFailed(request: Request, response: Response) {
 
         const apiKey = '7b05cca37ebb7bb4323b71ce5226cebb'
 
@@ -386,6 +386,11 @@ export class UserController {
         try {
             JobService.update(+request.params.jobId, "PENDING");
             const { products, id, tsCreated } = await JobService.getFailedUrls(+request.params.jobId)
+            if (!products.length) {
+                await JobService.update(+request.params.jobId, "SUCCESS");
+                return response.send('Done');
+            }
+
 
             const urls = products.map(product => product.url);
 
@@ -399,7 +404,7 @@ export class UserController {
                         if (el !== null) {
                             return el.innerHTML;
                         } else {
-                            return JSON.stringify({ product: null, url: item });
+                            return JSON.stringify({ url: item });
                         }
 
                     });
