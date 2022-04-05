@@ -163,11 +163,20 @@ export class UserController {
             let products = JSON.parse(textContent);
             let slicedUrls = [] // to be removed
 
+
+
             products.forEach((u) => {
-                if (category && category.length && u.includes(category)) slicedUrls.push(u);
+                // if (category && category.length && u.includes(category)) slicedUrls.push(u);
+                if (category && category.length) {
+                    category.split(",").forEach(c => {
+                        if (u.includes(c)) slicedUrls.push(u);
+                    })
+                }
                 if (!category) slicedUrls.push(u);
             })
 
+
+            console.log({ slicedUrls })
 
             const common = 'https://www.henryschein.it/it-it/dentale/p'
 
@@ -259,14 +268,14 @@ export class UserController {
             // const csvFields = Object.keys(rows[0]).map(key => key.charAt(0).toUpperCase());
             const time = new Date();
             const filename = `${description}_${time.getDate()}-${time.getMonth() + 1}-${time.getFullYear()}_${time.getHours()}h-${time.getMinutes()}m-${time.getSeconds()}s`
-            console.log({ filename })
+
             const csv = fs.createWriteStream("./" + filename + '.csv');
             await fastCsv.write(rows, { headers: true }).
                 on("finish", async function () {
                     response.header('Content-Disposition', `attachment; filename="${filename}.csv"`);
                     setTimeout(() => {
                         response.sendFile(path.resolve("./" + filename + ".csv"));
-                    }, 3000)
+                    }, 5000)
                 }).pipe(csv);
 
 
