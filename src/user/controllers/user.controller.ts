@@ -175,9 +175,6 @@ export class UserController {
                 if (!category) slicedUrls.push(u);
             })
 
-
-            console.log({ slicedUrls })
-
             const common = 'https://www.henryschein.it/it-it/dentale/p'
 
             await asyncForEach(slicedUrls, async (item) => {
