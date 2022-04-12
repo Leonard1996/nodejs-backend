@@ -27,7 +27,6 @@ export class ProductService {
     static async update(product) {
         const productRepository = getRepository(Product);
         let oldProduct = await productRepository.findOne(product.id);
-        console.log({ oldProduct, product })
         product = productRepository.merge(oldProduct, { raw: JSON.stringify(product), offer: JSON.stringify(product.offers), brand: JSON.stringify(product.brand), name: product.name, description: product.description, mpn: product.mpn, sku: product.sku, image: product.image });
         return productRepository.save(product);
     }
