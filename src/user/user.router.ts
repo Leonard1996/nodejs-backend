@@ -6,77 +6,78 @@ import { PermissionMiddleware } from "../common/middlewares/permission.middlewar
 import { UserRole } from "./utilities/UserRole";
 
 export class UserRouter {
+  static configRoutes = (app: express.Application) => {
+    app.get("/users", [
+      AuthenticationMiddleware.checkJwtToken,
+      PermissionMiddleware.checkAllowedPermissions([
+        UserRole.ADMIN,
+        UserRole.USER,
+      ]),
+      UserController.list,
+    ]);
 
-    static configRoutes = (app: express.Application) => {
+    app.get("/users/:userId", [
+      AuthenticationMiddleware.checkJwtToken,
+      PermissionMiddleware.checkMeOrPermissionsAllowed([UserRole.ADMIN]),
+      UserController.getById,
+    ]);
 
-        app.get("/users", [
-            AuthenticationMiddleware.checkJwtToken,
-            PermissionMiddleware.checkAllowedPermissions([UserRole.ADMIN, UserRole.USER]),
-            UserController.list
-        ]);
+    app.post("/users", [
+      AuthenticationMiddleware.checkJwtToken,
+      PermissionMiddleware.checkAllowedPermissions([UserRole.ADMIN]),
+      UserMiddleware.validateInsertInput,
+      UserMiddleware.checkUserExistance("email", "body.email", false),
+      UserController.insert,
+    ]);
 
-        app.get("/users/:userId", [
-            AuthenticationMiddleware.checkJwtToken,
-            PermissionMiddleware.checkMeOrPermissionsAllowed([UserRole.ADMIN]),
-            UserController.getById
-        ]);
+    app.patch("/users/:userId", [
+      AuthenticationMiddleware.checkJwtToken,
+      PermissionMiddleware.checkAllowedPermissions([UserRole.ADMIN]),
+      UserMiddleware.validationPatchByIdInput,
+      UserController.patchById,
+    ]);
 
-        app.post("/users", [
-            AuthenticationMiddleware.checkJwtToken,
-            PermissionMiddleware.checkAllowedPermissions([UserRole.ADMIN]),
-            UserMiddleware.validateInsertInput,
-            UserMiddleware.checkUserExistance('email', 'body.email', false),
-            UserController.insert
-        ]);
+    app.delete("/users/:userId", [
+      AuthenticationMiddleware.checkJwtToken,
+      PermissionMiddleware.checkAllowedPermissions([UserRole.ADMIN]),
+      PermissionMiddleware.checkNotMe,
+      UserMiddleware.checkUserExistance("id", "params.userId", true),
+      UserController.deleteById,
+    ]);
 
-        app.patch("/users/:userId", [
-            AuthenticationMiddleware.checkJwtToken,
-            PermissionMiddleware.checkAllowedPermissions([UserRole.ADMIN]),
-            UserMiddleware.validationPatchByIdInput,
-            UserController.patchById
-        ]);
+    app.get("/scrape", [
+      AuthenticationMiddleware.checkJwtToken,
+      UserController.startScrape,
+    ]);
 
-        app.delete("/users/:userId", [
-            AuthenticationMiddleware.checkJwtToken,
-            PermissionMiddleware.checkAllowedPermissions([UserRole.ADMIN]),
-            PermissionMiddleware.checkNotMe,
-            UserMiddleware.checkUserExistance('id', 'params.userId', true),
-            UserController.deleteById
-        ]);
+    app.get("/products-latest", [
+      AuthenticationMiddleware.checkJwtToken,
+      UserController.getLatest,
+    ]);
 
-        app.get("/scrape", [
-            AuthenticationMiddleware.checkJwtToken,
-            UserController.startScrape
-        ]);
+    app.get("/products-csv/:id", [
+      AuthenticationMiddleware.checkJwtToken,
+      UserController.getCsv,
+    ]);
 
-        app.get("/products-latest", [
-            AuthenticationMiddleware.checkJwtToken,
-            UserController.getLatest
-        ]);
+    app.get("/jobs", [
+      AuthenticationMiddleware.checkJwtToken,
+      UserController.getJobs,
+    ]);
 
-        app.get("/products-csv/:id", [
-            // AuthenticationMiddleware.checkJwtToken,
-            UserController.getCsv
-        ]);
+    app.get("/categories", [
+      AuthenticationMiddleware.checkJwtToken,
+      UserController.getCategories,
+    ]);
 
-        app.get("/jobs", [
-            AuthenticationMiddleware.checkJwtToken,
-            UserController.getJobs
-        ]);
+    app.delete("/jobs/:id", [
+      AuthenticationMiddleware.checkJwtToken,
+      UserController.deleteJob,
+    ]);
 
-        app.get("/categories", [
-            AuthenticationMiddleware.checkJwtToken,
-            UserController.getCategories
-        ]);
-
-        app.delete("/jobs/:id", [
-            AuthenticationMiddleware.checkJwtToken,
-            UserController.deleteJob
-        ]);
-
-        app.get("/scrape-retry/:jobId", [
-            AuthenticationMiddleware.checkJwtToken,
-            UserController.startFailedScrape
-        ]);
-    }
+    app.get("/scrape-retry/:jobId", [
+      AuthenticationMiddleware.checkJwtToken,
+      UserController.startFailedScrape,
+    ]);
+  };
 }

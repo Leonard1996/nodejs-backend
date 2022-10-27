@@ -1,9 +1,9 @@
 {
   "type": "mysql",
-  "host": "localhost",
+  "host": "127.0.0.1",
   "port": 3306,
-  "username": "root",
-  "password": "root",
+  "username": "admin",
+  "password": "admin321",
   "database": "scraper_db",
   "synchronize": false,
   "logging": false,
